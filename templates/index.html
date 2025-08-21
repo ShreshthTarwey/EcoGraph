@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoGraph - Smart Waste Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
+            min-height: 100vh;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #16a34a, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 25px;
+            align-items: start;
+        }
+
+        .graph-container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            min-height: 700px;
+        }
+
+        .graph-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        #cy {
+            width: 100%;
+            height: 650px;
+            border-radius: 15px;
+            background: #f8fafc;
+            border: 2px solid rgba(34, 197, 94, 0.1);
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-section {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #16a34a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .waste-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d1fae5;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #f0fdf4;
+            transition: all 0.3s ease;
+        }
+
+        .waste-input:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        .classify-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #16a34a, #22c55e);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .classify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .classify-btn:active {
+            transform: translateY(0);
+        }
+
+        .queue-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #adcce6, #aa32d9);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(202, 240, 76, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .queue-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(179, 108, 241, 0.4);
+        }
+
+        .queue-btn:active {
+            transform: translateY(0);
+        }
+
+        .status-display {
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .status-waiting {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+
+        .status-processing {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+
+        .status-complete {
+            background: #d1fae5;
+            color: #16a34a;
+            border: 1px solid #22c55e;
+        }
+
+        .selected-home {
+            background: #ecfdf5;
+            border: 2px solid #22c55e;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #0c4a6e;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .route-info {
+            background: #fef7ff;
+            border: 1px solid #d946ef;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(550px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #16a34a, #22c55e);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #dc2626, #ef4444);
+        }
+        .notification.info {
+            background: linear-gradient(45deg, #16a34a, #22c55e);
+
+        }
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .queue-display {
+            list-style: none;
+            margin-top: 10px;
+            padding-left: 15px;
+        }
+
+        .queue-display li {
+            margin-bottom: 6px;
+            color: #1f2937;
+            font-size: 14px;
+            background: #e0f2fe;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #93c5fd;
+        }
+
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .mode-toggle input {
+            margin-right: 10px;
+        }
+
+        .toggle-label {
+            color: #1e3a8a;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 EcoGraph</h1>
+            <p>Smart Waste Management & Route Optimization System</p>
+        </div>
+
+        <div class="main-content">
+            <div class="graph-container">
+                <h3 class="graph-title">City Waste Management Network</h3>
+                <div id="cy"></div>
+            </div>
+
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3 class="panel-title"> Waste Classification</h3>
+                    <div class="input-group">
+                        <label for="wasteInput">Describe your waste item:</label>
+                        <input type="text" id="wasteInput" class="waste-input"
+                            placeholder="e.g., plastic bottle, broken phone, banana peel...">
+                    </div>
+                    <button class="queue-btn" onclick="addToQueue()">Add To Queue</button>
+                    <button class="classify-btn" onclick="submitQueue()">
+                        Classify All & Route
+                    </button>
+                </div>
+                <div class="panel-section">
+                    <h3 class="panel-title">Homes in queue</h3>
+                    <div class="info-box">
+                        Click on any home node (H1-H6) in the graph to select your location
+                    </div>
+                    <!-- <div id="selectedHomeDisplay" class="selected-home" style="display: none;">
+                        <strong>Selected Home:</strong> <span id="selectedHomeName"></span>
+                    </div> -->
+                    <ul id="queueHomeList" class="queue-display"></ul>
+
+                </div>
+                <div class="panel-section">
+                    <label class="mode-toggle">
+                        <input type="checkbox" id="modeSwitch" onchange="toggleRoutingMode()" />
+                        <span class="toggle-label">Enable FIFO Mode (Collect All First, Then Dispose)</span>
+
+                    </label>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title">Route Status</h3>
+                    <div id="routeStatus" class="status-display status-waiting">
+                        Waiting for input...
+                    </div>
+                    <div id="routeInfo" class="route-info" style="display: none;">
+                        <strong>Route Distance:</strong> <span id="routeDistance">-- km</span><br>
+                        <strong>ETA:</strong> <span id="routeETA">-- min</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title">🎯 Legend</h3>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ef4444;"></div>
+                            <span>Truck Depot</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3b82f6;"></div>
+                            <span>Homes</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #22c55e;"></div>
+                            <span>Waste Bins</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8b5cf6;"></div>
+                            <span>Junctions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Global variables
+        queueArray = [];
+        let selectedHomeNode = null;
+        let cy = null;
+
+        // Initialize Cytoscape graph
+        function initializeGraph() {
+            cy = cytoscape({
+                container: document.getElementById('cy'),
+
+                elements: [
+                    // Nodes
+                    { data: { id: 'T1', label: 'Truck Depot', type: 'depot' } },
+
+                    // Homes
+                    { data: { id: 'H1', label: 'Home 1', type: 'home' } },
+                    { data: { id: 'H2', label: 'Home 2', type: 'home' } },
+                    { data: { id: 'H3', label: 'Home 3', type: 'home' } },
+                    { data: { id: 'H4', label: 'Home 4', type: 'home' } },
+                    { data: { id: 'H5', label: 'Home 5', type: 'home' } },
+                    { data: { id: 'H6', label: 'Home 6', type: 'home' } },
+
+                    // Waste Bins
+                    { data: { id: 'B1', label: 'Plastic Bin', type: 'bin' } },
+                    { data: { id: 'B2', label: 'Organic Bin', type: 'bin' } },
+                    { data: { id: 'B3', label: 'Paper Bin', type: 'bin' } },
+                    { data: { id: 'B4', label: 'Metal Bin', type: 'bin' } },
+                    { data: { id: 'B5', label: 'Glass Bin', type: 'bin' } },
+                    { data: { id: 'B6', label: 'Electronic Bin', type: 'bin' } },
+
+                    // Junctions
+                    { data: { id: 'J1', label: 'Junction 1', type: 'junction' } },
+                    { data: { id: 'J2', label: 'Junction 2', type: 'junction' } },
+                    { data: { id: 'J3', label: 'Junction 3', type: 'junction' } },
+                    { data: { id: 'J4', label: 'Junction 4', type: 'junction' } },
+                    { data: { id: 'J5', label: 'Junction 5', type: 'junction' } },
+                    { data: { id: 'J6', label: 'Junction 6', type: 'junction' } },
+                    { data: { id: 'J7', label: 'Junction 7', type: 'junction' } },
+                    { data: { id: 'J8', label: 'Junction 8', type: 'junction' } },
+
+                    // Edges with weights
+                    { data: { id: 'e1', source: 'T1', target: 'J1', weight: 2.1 } },
+                    { data: { id: 'e2', source: 'J1', target: 'J2', weight: 1.8 } },
+                    { data: { id: 'e3', source: 'J1', target: 'H1', weight: 1.2 } },
+                    { data: { id: 'e4', source: 'J2', target: 'H2', weight: 1.5 } },
+                    { data: { id: 'e5', source: 'J2', target: 'J3', weight: 2.3 } },
+                    { data: { id: 'e6', source: 'J3', target: 'H3', weight: 1.7 } },
+                    { data: { id: 'e7', source: 'J3', target: 'J4', weight: 1.9 } },
+                    { data: { id: 'e8', source: 'J4', target: 'H4', weight: 1.4 } },
+                    { data: { id: 'e9', source: 'J4', target: 'J5', weight: 2.2 } },
+                    { data: { id: 'e10', source: 'J5', target: 'H5', weight: 1.6 } },
+                    { data: { id: 'e11', source: 'J5', target: 'J6', weight: 1.8 } },
+                    { data: { id: 'e12', source: 'J6', target: 'H6', weight: 1.3 } },
+                    { data: { id: 'e13', source: 'J6', target: 'J7', weight: 2.4 } },
+                    { data: { id: 'e14', source: 'J7', target: 'B1', weight: 1.1 } },
+                    { data: { id: 'e15', source: 'J7', target: 'B2', weight: 1.5 } },
+                    { data: { id: 'e16', source: 'J7', target: 'J8', weight: 1.7 } },
+                    { data: { id: 'e17', source: 'J8', target: 'B3', weight: 1.2 } },
+                    { data: { id: 'e18', source: 'J8', target: 'B4', weight: 1.8 } },
+                    { data: { id: 'e19', source: 'J8', target: 'B5', weight: 1.4 } },
+                    { data: { id: 'e20', source: 'J8', target: 'B6', weight: 1.9 } },
+                    { data: { id: 'e21', source: 'J1', target: 'J4', weight: 3.2 } },
+                    { data: { id: 'e22', source: 'J2', target: 'J5', weight: 2.7 } },
+                    { data: { id: 'e23', source: 'J3', target: 'J6', weight: 2.9 } },
+                    { data: { id: 'e24', source: 'H1', target: 'J2', weight: 2.1 } },
+                    { data: { id: 'e25', source: 'H2', target: 'J3', weight: 1.9 } },
+                    { data: { id: 'e26', source: 'H3', target: 'J4', weight: 2.2 } },
+                    { data: { id: 'e27', source: 'H4', target: 'J5', weight: 1.8 } },
+                    { data: { id: 'e28', source: 'H5', target: 'J6', weight: 2.0 } },
+                    { data: { id: 'e29', source: 'H6', target: 'J7', weight: 1.6 } },
+                    { data: { id: 'e30', source: 'J4', target: 'J7', weight: 3.1 } }
+                ],
+
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': '#e5e7eb',
+                            'label': 'data(label)',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'color': '#1f2937',
+                            'font-size': '12px',
+                            'font-weight': 'bold',
+                            'width': '60px',
+                            'height': '60px',
+                            'border-width': '3px',
+                            'border-color': '#9ca3af',
+                            'text-outline-width': '2px',
+                            'text-outline-color': '#ffffff'
+                        }
+                    },
+                    {
+                        selector: 'node[type="depot"]',
+                        style: {
+                            'background-color': '#ef4444',
+                            'border-color': '#dc2626',
+                            'shape': 'diamond',
+                            'width': '70px',
+                            'height': '70px'
+                        }
+                    },
+                    {
+                        selector: 'node[type="home"]',
+                        style: {
+                            'background-color': '#3b82f6',
+                            'border-color': '#2563eb',
+                            'shape': 'rectangle'
+                        }
+                    },
+                    {
+                        selector: 'node[type="bin"]',
+                        style: {
+                            'background-color': '#22c55e',
+                            'border-color': '#16a34a',
+                            'shape': 'octagon'
+                        }
+                    },
+                    {
+                        selector: 'node[type="junction"]',
+                        style: {
+                            'background-color': '#8b5cf6',
+                            'border-color': '#7c3aed',
+                            'shape': 'circle',
+                            'width': '45px',
+                            'height': '45px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': '3px',
+                            'line-color': '#d1d5db',
+                            
+                            'curve-style': 'bezier',
+                            'label': 'data(weight)',
+                            'font-size': '15px',
+                            'color': '#6b7280',
+                            'text-outline-width': '3px',
+                            'text-outline-color': '#ffffff'
+                        }
+                    },
+                    {
+                        selector: '.selected',
+                        style: {
+                            'border-color': '#f59e0b',
+                            'border-width': '5px',
+                            'background-color': '#fbbf24'
+                        }
+                    },
+                    {
+                        selector: '.highlighted',
+                        style: {
+                            'background-color': '#f59e0b',
+                            'border-color': '#d97706',
+                            'border-width': '5px'
+                        }
+                    },
+                    {
+                        selector: 'edge.highlighted',
+                        style: {
+                            'line-color': '#f59e0b',
+                            'target-arrow-color': '#f59e0b',
+                            'width': '6px'
+                        }
+                    }
+                ],
+
+                layout: {
+                    name: 'preset',
+                    positions: {
+                        'T1': { x: 100, y: 300 },
+                        'J1': { x: 200, y: 300 },
+                        'J2': { x: 300, y: 200 },
+                        'J3': { x: 400, y: 250 },
+                        'J4': { x: 500, y: 300 },
+                        'J5': { x: 600, y: 200 },
+                        'J6': { x: 700, y: 250 },
+                        'J7': { x: 800, y: 300 },
+                        'J8': { x: 900, y: 350 },
+                        'H1': { x: 150, y: 150 },
+                        'H2': { x: 250, y: 100 },
+                        'H3': { x: 350, y: 150 },
+                        'H4': { x: 450, y: 100 },
+                        'H5': { x: 550, y: 100 },
+                        'H6': { x: 650, y: 150 },
+                        'B1': { x: 750, y: 450 },
+                        'B2': { x: 850, y: 450 },
+                        'B3': { x: 950, y: 450 },
+                        'B4': { x: 1050, y: 400 },
+                        'B5': { x: 1050, y: 300 },
+                        'B6': { x: 1050, y: 200 }
+                    }
+                }
+            });
+
+            // Add click event for home selection
+            cy.on('tap', 'node', function (evt) {
+                const node = evt.target;
+                if (node.data('type') === 'home') {
+                    selectHomeNode(node);
+                }
+            });
+
+            // Add hover tooltips
+            cy.on('mouseover', 'node', function (evt) {
+                const node = evt.target;
+                node.style('text-outline-width', '3px');
+            });
+
+            cy.on('mouseout', 'node', function (evt) {
+                const node = evt.target;
+                node.style('text-outline-width', '2px');
+            });
+        }
+        let fifoModeEnabled = false;  // This is now clearer than 'optimizedRoutingEnabled'
+
+        function toggleRoutingMode() {
+            fifoModeEnabled = document.getElementById('modeSwitch').checked;
+            let mes = fifoModeEnabled
+                    ? "FIFO Mode Enabled: Collect all waste first, then dispose"
+                    : "Priority Mode Enabled: Dispose after each pickup (optimized)";
+            showNotification(
+                mes,"info"
+            );
+
+        }
+        // Select home node function
+        function selectHomeNode(node) {
+            const nodeId = node.data('id');
+
+            // If the node is already selected, deselect it
+            if (selectedHomeNode === nodeId) {
+                node.removeClass('selected');
+                selectedHomeNode = null;
+                showNotification(`Deselected ${node.data('label')}`, 'info');
+                return;
+            }
+
+            // Deselect any previously selected node
+            if (selectedHomeNode) {
+                const previousNode = cy.getElementById(selectedHomeNode);
+                previousNode.removeClass('selected');
+            }
+
+            // Select the new node
+            selectedHomeNode = nodeId;
+            node.addClass('selected');
+
+            showNotification('Home selected: ' + node.data('label'), 'success');
+        }
+
+
+        // Submit waste function (placeholder for backend integration)
+        function submitQueue() {
+            if (queueArray.length === 0) {
+                showNotification("Queue is empty! Add at least one home and waste.", "error");
+                return;
+            }
+
+            updateRouteStatus('processing', 'Processing full route...');
+
+            const routeEndpoint = fifoModeEnabled ? '/fifo_collect_all_first' : '/priority_immediate_dispose';
+
+            fetch(routeEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ queue: queueArray })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const path = data.path;
+                    highlightFullRoute(path);
+                    updateRouteStatus('complete', `Route processed across ${queueArray.length} homes.`);
+
+                    document.getElementById('routeInfo').style.display = 'block';
+                    document.getElementById('routeDistance').textContent = (Math.random() * 10 + 10).toFixed(1) + ' km';
+                    document.getElementById('routeETA').textContent = (Math.random() * 15 + 10).toFixed(0) + ' min';
+
+                    showNotification("Route calculated!", "success");
+                })
+                .catch(err => {
+                    console.error(err);
+                    showNotification("Backend error. Please try again.", "error");
+                    updateRouteStatus('waiting', 'Waiting for input...');
+                });
+
+        }
+
+
+        function addToQueue() {
+            const waste = document.getElementById('wasteInput').value.trim();
+
+            if (!waste || !selectedHomeNode) {
+                showNotification('Please enter a waste item and select a home.', 'error');
+                return;
+            }
+
+            // Check for duplicate home
+            const alreadyInQueue = queueArray.some(entry => entry.home === selectedHomeNode);
+            if (alreadyInQueue) {
+                showNotification(`Home ${selectedHomeNode} is already in the queue.`, 'error');
+                return;
+            }
+
+            // Add to queue
+            queueArray.push({ home: selectedHomeNode, waste });
+
+            // Visual confirmation
+            const node = cy.getElementById(selectedHomeNode);
+            node.addClass('selected'); // Visually mark as selected
+
+            // Update queue list visually
+            const queueDisplay = document.getElementById('queueHomeList');
+            const listItem = document.createElement('li');
+            listItem.textContent = `${selectedHomeNode} → ${waste}`;
+            queueDisplay.appendChild(listItem);
+
+            // Reset input and selection
+            document.getElementById('wasteInput').value = '';
+            selectedHomeNode = null;
+
+            showNotification(`Added ${queueArray[queueArray.length - 1].home} to queue.`, 'success');
+        }
+
+        // Highlight full route function with animation
+        function highlightFullRoute(pathArray) {
+            // Clear previous highlights
+            cy.elements().removeClass('highlighted');
+
+            // Animate route highlighting step by step
+            let currentIndex = 0;
+
+            function animateNextStep() {
+                if (currentIndex >= pathArray.length) {
+                    return; // Animation complete
+                }
+
+                // Highlight current nodes
+                const currentNode = cy.getElementById(pathArray[currentIndex]);
+                currentNode.addClass('highlighted');
+
+                // Add pulsing animation to current node
+                currentNode.animate({
+                    style: {
+                        'width': '80px',
+                        'height': '80px'
+                    }
+                }, {
+                    duration: 300,
+                    complete: function () {
+                        currentNode.animate({
+                            style: {
+                                'width': currentNode.data('type') === 'depot' ? '70px' :
+                                    currentNode.data('type') === 'junction' ? '45px' : '60px',
+                                'height': currentNode.data('type') === 'depot' ? '70px' :
+                                    currentNode.data('type') === 'junction' ? '45px' : '60px'
+                            }
+                        }, {
+                            duration: 200
+                        });
+                    }
+                });
+
+                // Highlight edge to next node
+                if (currentIndex < pathArray.length - 1) {
+                    const source = pathArray[currentIndex];
+                    const target = pathArray[currentIndex + 1];
+
+                    // Find edge between source and target
+                    const edge = cy.edges().filter(function (ele) {
+                        return (ele.source().id() === source && ele.target().id() === target) ||
+                            (ele.source().id() === target && ele.target().id() === source);
+                    });
+
+                    setTimeout(() => {
+                        edge.addClass('highlighted');
+
+                        // Animate edge
+                        edge.animate({
+                            style: {
+                                'width': '8px'
+                            }
+                        }, {
+                            duration: 300,
+                            complete: function () {
+                                edge.animate({
+                                    style: {
+                                        'width': '6px'
+                                    }
+                                }, {
+                                    duration: 200
+                                });
+                            }
+                        });
+                    }, 150);
+                }
+
+                currentIndex++;
+                setTimeout(animateNextStep, 600); // Next step after 600ms
+            }
+
+            // Start animation
+            animateNextStep();
+        }
+
+        // Update route status
+        function updateRouteStatus(status, message) {
+            const statusDiv = document.getElementById('routeStatus');
+            statusDiv.className = 'status-display status-' + status;
+            statusDiv.textContent = message;
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Reset route function
+        function resetRoute() {
+            cy.elements().removeClass('highlighted');
+            selectedHomeNode = null;
+            cy.nodes().removeClass('selected');
+            document.getElementById('selectedHomeDisplay').style.display = 'none';
+            document.getElementById('routeInfo').style.display = 'none';
+            document.getElementById('wasteInput').value = '';
+            updateRouteStatus('waiting', 'Waiting for input...');
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeGraph();
+
+            // Add Enter key support for waste input
+            document.getElementById('wasteInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    submitWaste();
+                }
+            });
+        });
+
+        // Expose functions for backend integration
+        window.EcoGraph = {
+            highlightFullRoute: highlightFullRoute,
+            selectHomeNode: function (nodeId) {
+                const node = cy.getElementById(nodeId);
+                if (node.length > 0) {
+                    selectHomeNode(node);
+                }
+            },
+            resetRoute: resetRoute,
+            getSelectedHome: function () {
+                return selectedHomeNode;
+            },
+            updateRouteStatus: updateRouteStatus,
+            showNotification: showNotification
+        };
+    </script>
+</body>
+
+</html>
