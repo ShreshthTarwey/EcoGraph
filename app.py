@@ -182,57 +182,59 @@ def classify_waste(waste):
     return "B2"  # Default fallback
 
 
-# ---- Dijkstra Shortest Path Algorithm ----
-# def run_dijkstra(start, end):
-#     heap = [(0, start, [])]
-#     visited = set()
-
-#     while heap:
-#         cost, node, path = heapq.heappop(heap)
-#         if node in visited:
-#             continue
-#         visited.add(node)
-#         path = path + [node]
-
-#         if node == end:
-#             return path
-
-#         for neighbor, weight in graph.get(node, {}).items():
-#             if neighbor not in visited:
-#                 heapq.heappush(heap, (cost + weight, neighbor, path))
-
-#     return []  # No path found
-import subprocess
-
+# ---- Dijkstra Shortest Path Algorithm ---- for web hosting-----
 def run_dijkstra(start, end):
-    try:
-        # Run the compiled C++ program with start and end as arguments
-        result = subprocess.run(
-            ["./logic", start, end],      # Command
-            capture_output=True,          # Capture stdout and stderr
-            text=True,                    # Decode as string instead of bytes
-            check=True                    # Raise error if return code != 0
-        )
+    heap = [(0, start, [])]
+    visited = set()
 
-        # The output from C++ (stdout)
-        output = result.stdout.strip()
+    while heap:
+        cost, node, path = heapq.heappop(heap)
+        if node in visited:
+            continue
+        visited.add(node)
+        path = path + [node]
 
-        # Example C++ output format:
-        # Shortest Path Cost: 10
-        # T1 -> J1 -> J2 -> J5 -> J6 -> J7 -> J8 -> B3
+        if node == end:
+            return path
 
-        lines = output.splitlines()
-        if len(lines) < 2:
-            return []  # Something went wrong
+        for neighbor, weight in graph.get(node, {}).items():
+            if neighbor not in visited:
+                heapq.heappush(heap, (cost + weight, neighbor, path))
 
-        path_line = lines[1]  # "T1 -> J1 -> ... -> B3"
-        path = [node.strip() for node in path_line.split("->")]
+    return []  # No path found
 
-        return path
+# This part is for offline meachines not for hosted webApp
+# import subprocess
 
-    except subprocess.CalledProcessError as e:
-        print("Error running C++ program:", e.stderr)
-        return []
+# def run_dijkstra(start, end):
+#     try:
+#         # Run the compiled C++ program with start and end as arguments
+#         result = subprocess.run(
+#             ["./logic", start, end],      # Command
+#             capture_output=True,          # Capture stdout and stderr
+#             text=True,                    # Decode as string instead of bytes
+#             check=True                    # Raise error if return code != 0
+#         )
+
+#         # The output from C++ (stdout)
+#         output = result.stdout.strip()
+
+#         # Example C++ output format:
+#         # Shortest Path Cost: 10
+#         # T1 -> J1 -> J2 -> J5 -> J6 -> J7 -> J8 -> B3
+
+#         lines = output.splitlines()
+#         if len(lines) < 2:
+#             return []  # Something went wrong
+
+#         path_line = lines[1]  # "T1 -> J1 -> ... -> B3"
+#         path = [node.strip() for node in path_line.split("->")]
+
+#         return path
+
+#     except subprocess.CalledProcessError as e:
+#         print("Error running C++ program:", e.stderr)
+#         return []
 
 
 
