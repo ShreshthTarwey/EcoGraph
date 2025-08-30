@@ -11,6 +11,14 @@ EcoGraph is a small—but mighty—demo that turns city waste collection into an
 - Status updates and a **friendly UI** for selecting homes and building a pickup queue.  
 
 ---
+## System Architecture
+
+<img src="./assets/System_Architecture.png" width="600">
+
+## Data Flow Diagram
+
+<img src="./assets/Data_Flow_Diagram2.png">
+
 
 ## 🔀 Two Routing Modes (Toggle Feature)
 
